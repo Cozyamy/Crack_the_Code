@@ -1,5 +1,4 @@
-// src/pages/WordGamePage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -9,16 +8,28 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 
 export default function WordGamePage() {
   const navigate = useNavigate();
-  const { currentGame, endGame, setCurrentGame, isValidGuess } = useGame();
+  const { currentGame, endGame, setCurrentGame, isValidGuess, restartGame } = useGame();
+  const guesses = currentGame?.attempts || [];
   const [validationMessage, setValidationMessage] = useState('');
 
   const [guess, setGuess] = useState('');
-  const [guesses, setGuesses] = useState([]);
-  const [isGameOver, setIsGameOver] = useState(false);
+
+  const [showMisplaced, setShowMisplaced] = useState(true);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const isGameOver = currentGame?.isWon || (currentGame?.maxAttempts !== Infinity && currentGame?.attempts.length >= currentGame?.maxAttempts);
+
+  useEffect(() => {
+    if (currentGame && currentGame.mode !== 'word') {
+      navigate('/');
+    }
+  }, [currentGame, navigate]);
 
   if (!currentGame || currentGame.mode !== 'word') {
-    navigate('/');
-    return null;
+    return <p>Loading game...</p>; // or null
   }
 
   const { answer, maxAttempts, difficulty } = currentGame;
@@ -42,64 +53,90 @@ export default function WordGamePage() {
     // Clear validation message on valid guess
     setValidationMessage('');
 
-    const result = checkWordGuess(normalized, answer, difficulty);
+    const result = checkWordGuess(normalized, answer, difficulty, showMisplaced);
     console.log('Guess result:', result);
     const newGuesses = [...guesses, { guess: normalized, result }];
-    setGuesses(newGuesses);
     setGuess('');
 
-    setCurrentGame(prev => ({ ...prev, answer: prev.answer.toUpperCase(), attempts: [...prev.attempts, { guess: normalized, result }], }));
-
+    setCurrentGame(prev => ({
+      ...prev,
+      attempts: newGuesses,
+    }));
 
     if (normalized === answer) {
-      setIsGameOver(true);
+      setCurrentGame(prev => ({
+        ...prev,
+        attempts: newGuesses,
+        isWon: true,       // Add this!
+        isOver: true       // optional, if you use isOver to track game end
+      }));
       endGame(true);
     } else if (newGuesses.length >= maxAttempts) {
-      setIsGameOver(true);
+      setCurrentGame(prev => ({
+        ...prev,
+        attempts: newGuesses,
+        isWon: false,
+        isOver: true
+      }));
       endGame(false);
+    } else {
+      // Just update attempts if game not over yet
+      setCurrentGame(prev => ({
+        ...prev,
+        attempts: newGuesses,
+      }));
     }
   };
 
   return (
     <div className="container mx-auto p-6 max-w-3xl">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 p-2"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Home
-        </button>
+      <div className="relative flex flex-col sm:flex-row sm:justify-between sm:items-center sm:px-4 sm:mb-6 mb-12">
+        {/* Back Button - left */}
+        <div className="absolute left-0 top-0 sm:static">
+          <button
+            onClick={() => {
+              // localStorage.removeItem('isGameOver');
+              navigate('/');
+            }}
+            className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 px-2 py-1 text-sm sm:text-base"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Home
+          </button>
+        </div>
 
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 font-semibold text-gray-700 dark:text-gray-300 text-xl">
-            <div className="w-6 h-6 rounded bg-purple-500 text-white flex items-center justify-center font-mono text-xl">
+        {/* Center: Mode + Difficulty */}
+        <div className="mt-12 sm:mt-0 text-center sm:flex-1 sm:flex sm:flex-col sm:items-center">
+          <div className="flex justify-center items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 text-lg sm:text-xl">
+            <div className="w-6 h-6 rounded bg-blue-500 text-white flex items-center justify-center font-mono text-lg sm:text-xl">
               📝
             </div>
-            <span className="text-xl">Word Mode</span>
+            <span>Word Mode</span>
           </div>
-          <div className="mt-1 text-xs text-green-600 dark:text-green-400 border rounded-md border-gray-200 dark:border-gray-700 px-2 py-0.5">
+          <div className="mt-1 text-xs text-green-600 dark:text-green-400 border rounded-md border-gray-200 dark:border-gray-700 px-2 py-0.5 inline-block">
             <span className="uppercase font-mono pr-2">
               {difficulty} -
             </span>
             <span className="font-mono">
-              {currentGame.attempts.length} / {maxAttempts} attempts
+              {currentGame.attempts.length} / {currentGame.maxAttempts} attempts
             </span>
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            setIsGameOver(false);
-            setGuesses([]);
-            setGuess('');
-          }}
-          className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 p-2"
-        >
-          <RotateCcw className="w-5 h-5" />
-          New Game
-        </button>
+        {/* New Game Button - right */}
+        <div className="absolute right-0 top-0 sm:static">
+          <button
+            onClick={() => {
+              restartGame();
+              setGuess('');
+            }}
+            className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 px-2 py-1 text-sm sm:text-base"
+          >
+            <RotateCcw className="w-5 h-5" />
+            New Game
+          </button>
+        </div>
       </div>
 
       {/* Main Card */}
@@ -107,6 +144,18 @@ export default function WordGamePage() {
         <CardContent className="space-y-4">
           {/* Progress bar */}
           <div className="mb-2 border rounded-md border-gray-200 dark:border-gray-700 p-4">
+            {difficulty === 'insane' && (
+              <div className="mt-2 text-sm flex items-center gap-2 justify-center">
+                <label className="flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showMisplaced}
+                    onChange={(e) => setShowMisplaced(e.target.checked)}
+                  />
+                  Show Misplaced Feedback
+                </label>
+              </div>
+            )}
             <div className="flex flex-row justify-between">
               <div className="text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">
                 Progress
@@ -121,33 +170,6 @@ export default function WordGamePage() {
                 style={{ width: `${(currentGame.attempts.length / maxAttempts) * 100}%` }}
               ></div>
             </div>
-          </div>
-
-          {/* Guess history */}
-          <div className="space-y-2">
-            {guesses.map((entry, i) => (
-              <div key={i} className="flex flex-wrap gap-2">
-                {entry.guess.split('').map((char, j) => {
-                  const resultType = entry.result[j];
-                  // No need for unknown check anymore
-                  const displayChar = char;
-
-                  const baseClass = 'w-10 h-10 flex items-center justify-center font-mono font-bold text-lg border rounded';
-                  const colorClass =
-                    resultType === 'correct'
-                      ? 'bg-green-500 text-white'
-                      : resultType === 'misplaced'
-                        ? 'bg-yellow-500 text-white'
-                        : 'bg-gray-400 text-white'; // fallback for 'absent' or others
-
-                  return (
-                    <div key={j} className={`${baseClass} ${colorClass}`}>
-                      {displayChar}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
           </div>
 
           {/* Input */}
@@ -167,10 +189,10 @@ export default function WordGamePage() {
                   setGuess(e.target.value.toUpperCase());
                   setValidationMessage('');
                 }}
-                className="flex-1 p-2 rounded border bg-background text-foreground uppercase"
+                className="flex-1 p-1.5 text-sm sm:p-2 sm:text-base rounded border bg-background text-foreground uppercase"
                 placeholder="Enter 5-letter word"
               />
-              <Button type="submit">Guess</Button>
+              <Button type="submit" className="p-1.5 text-sm sm:p-2 sm:text-base">Guess</Button>
             </form>
           )}
           {validationMessage && (
@@ -178,6 +200,57 @@ export default function WordGamePage() {
               {validationMessage}
             </p>
           )}
+
+          {/* Guess history */}
+          <div className="space-y-2">
+            {[...guesses].reverse().map((entry, i) => (
+              <div key={i} className="flex flex-wrap gap-2">
+                {(() => {
+                  if (entry.result.summary) {
+                    return (
+                      <div className="flex flex-col">
+                        <div className="flex gap-2 mb-1">
+                          {entry.guess.split('').map((char, j) => (
+                            <div
+                              key={j}
+                              className="w-10 h-10 flex items-center justify-center font-mono font-bold text-lg border border-gray-300 rounded text-gray-800 dark:text-gray-200 dark:border-gray-600"
+                            >
+                              {char}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 font-mono ml-1">
+                          {entry.result.correct} letter{entry.result.correct !== 1 ? 's' : ''} in correct position
+                          {entry.result.misplaced !== undefined ? `, ${entry.result.misplaced} misplaced` : ''}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return entry.guess.split('').map((char, j) => {
+                    const resultType = entry.result[j];
+                    const displayChar = char;
+
+                    const baseClass = 'w-10 h-10 flex items-center justify-center font-mono font-bold text-lg border rounded';
+                    const colorClass =
+                      resultType === 'correct'
+                        ? 'bg-green-500 text-white'
+                        : resultType === 'misplaced'
+                          ? 'bg-yellow-500 text-white'
+                          : resultType === 'none'
+                            ? 'bg-transparent border border-gray-400 text-gray-400' // EXPERT mode: no feedback
+                            : 'bg-gray-400 text-white'; // default for absent
+
+                    return (
+                      <div key={j} className={`${baseClass} ${colorClass}`}>
+                        {displayChar}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -187,54 +260,84 @@ export default function WordGamePage() {
           <CardTitle>Difficulty Levels</CardTitle>
           <CardDescription>How feedback changes depending on difficulty</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 p-6">
+          {/* Easy */}
           <div>
             <strong>Easy (10 guesses):</strong>
-            <div className="flex items-center gap-4 mt-1">
+            <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-4 mt-1">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-500 rounded border" />
-                <span>Correct letter &amp; position</span>
+                <div className="w-6 h-6 bg-green-500 rounded-full border" />
+                <span>Correct letter & position</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-yellow-500 rounded border" />
+                <div className="w-6 h-6 bg-yellow-500 rounded-full border" />
                 <span>Correct letter, wrong position</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-400 rounded border" />
-                <span>Letter not present</span>
+                <div className="w-6 h-6 bg-gray-400 rounded-full border" />
+                <span>letter not present</span>
               </div>
             </div>
           </div>
 
+          {/* Medium */}
           <div>
             <strong>Medium (7 guesses):</strong>
-            <div className="flex items-center gap-4 mt-1">
+            <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-4 mt-1">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-500 rounded border" />
-                <span>Correct letter &amp; position</span>
+                <div className="w-6 h-6 bg-green-500 rounded-full border" />
+                <span>Correct letter & position</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-yellow-500 rounded border" />
+                <div className="w-6 h-6 bg-yellow-500 rounded-full border" />
                 <span>Correct letter, wrong position</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-400 rounded border" />
-                <span>Letter not present</span>
+                <div className="w-6 h-6 bg-gray-400 rounded-full border" />
+                <span>letter not present</span>
               </div>
             </div>
           </div>
 
+          {/* Hard */}
           <div>
             <strong>Hard (5 guesses):</strong>
-            <div className="flex items-center gap-4 mt-1">
+            <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-4 mt-1">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-yellow-500 rounded border" />
+                <div className="w-6 h-6 bg-yellow-500 rounded-full border" />
                 <span>Correct letter (position not shown)</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-400 rounded border" />
-                <span>Letter not present</span>
+                <div className="w-6 h-6 bg-gray-400 rounded-full border" />
+                <span>letter not present</span>
               </div>
+            </div>
+          </div>
+
+          {/* Expert */}
+          <div>
+            <strong>Expert (5 guesses):</strong>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-1">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-green-500 rounded-full border" />
+                <span>Correct letter only</span>
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                No feedback is given for wrong or misplaced letters.
+              </div>
+            </div>
+          </div>
+
+          {/* Insane */}
+          <div>
+            <strong>Insane (∞ guesses):</strong>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Summary feedback only:
+              <ul className="list-disc list-inside mt-1">
+                <li><strong>Correct:</strong> Number of letters in the correct position</li>
+                <li><strong>Misplaced:</strong> (Optional) Number of correct letters in the wrong position</li>
+              </ul>
+              <p className="mt-1">Use the checkbox to toggle misplaced feedback.</p>
             </div>
           </div>
         </CardContent>
@@ -245,9 +348,8 @@ export default function WordGamePage() {
         isOpen={isGameOver}
         onClose={() => { }}
         onPlayAgain={() => {
-          setIsGameOver(false);
           setGuess('');
-          setGuesses([]);
+          setCurrentGame(prev => ({ ...prev, attempts: [] }));
         }}
         onShare={() => {
           alert('Share functionality not implemented yet.');
@@ -258,7 +360,7 @@ export default function WordGamePage() {
 }
 
 // Word feedback logic (Wordle-style)
-function checkWordGuess(guess, answer, difficulty) {
+function checkWordGuess(guess, answer, difficulty, showMisplaced = true) {
   guess = guess.toUpperCase();
   answer = answer.toUpperCase();
 
@@ -286,19 +388,28 @@ function checkWordGuess(guess, answer, difficulty) {
 
   const mode = (difficulty || 'EASY').toUpperCase();
 
-  if (mode === 'EASY') {
-    // Previously EASY behavior (normal)
-    return result;
-  }
-
-  if (mode === 'MEDIUM') {
-    // Previously EASY behavior, so just return normal result (same as EASY)
+  if (mode === 'EASY' || mode === 'MEDIUM') {
     return result;
   }
 
   if (mode === 'HARD') {
-    // Previously MEDIUM behavior: convert 'correct' to 'misplaced'
+    // Hide position info — convert 'correct' to 'misplaced'
     return result.map(r => (r === 'correct' ? 'misplaced' : r));
+  }
+
+  if (mode === 'EXPERT') {
+    // Only show correct letters — everything else is 'none'
+    return result.map(r => (r === 'correct' ? 'correct' : 'none'));
+  }
+
+  if (mode === 'INSANE') {
+    const numCorrect = result.filter(r => r === 'correct').length;
+    const numMisplaced = result.filter(r => r === 'misplaced').length;
+    return {
+      summary: true,
+      correct: numCorrect,
+      misplaced: showMisplaced ? numMisplaced : undefined
+    };
   }
 
   return result;

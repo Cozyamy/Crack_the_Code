@@ -1,6 +1,4 @@
-// src/components/constants.js
-
-import { Hash, Type, Target, Clock, Zap } from 'lucide-react';
+import { Hash, Type, Target, Clock, Zap, Brain } from 'lucide-react';
 
 export const GameMode = {
   NUMBER: 'number',
@@ -11,6 +9,8 @@ export const Difficulty = {
   EASY: 'easy',
   MEDIUM: 'medium',
   HARD: 'hard',
+  EXPERT: 'expert',
+  INSANE: 'insane',
 };
 
 export const gameModes = [
@@ -43,7 +43,7 @@ export const difficulties = [
     id: Difficulty.MEDIUM,
     icon: Clock,
     title: 'Medium',
-    description: 'Partial feedback, no position hints',
+    description: 'Full feedback with position hints',
     attempts: 7,
     color: 'text-yellow-600 dark:text-yellow-400',
   },
@@ -55,4 +55,20 @@ export const difficulties = [
     attempts: 5,
     color: 'text-red-600 dark:text-red-400',
   },
+  {
+    id: Difficulty.EXPERT,
+    icon: Brain,
+    title: 'Expert',
+    description: 'Unlimited attempts. Feedback only for correct positions.',
+    attempts: Infinity, // Or null/undefined
+    color: 'text-purple-600 dark:text-purple-400',
+  },
+  {
+  id: Difficulty.INSANE,
+  icon: Brain, // Or choose a new icon if you'd like
+  title: 'Insane',
+  description: 'Unlimited attempts. no color feedbacks or position hints',
+  attempts: Infinity,
+  color: 'text-pink-600 dark:text-pink-400',
+},
 ];

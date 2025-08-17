@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge';
 import { useTheme } from '../components/ThemeProvider';
 import { useGame } from '../components/GameContext';
-import { Moon, Sun, Hash, Type, Trophy, Target, Clock, Zap } from 'lucide-react';
+import { Moon, Sun, Trophy, Target } from 'lucide-react';
 import { gameModes, difficulties, GameMode, Difficulty } from '../components/constants';
 
 export default function HomePage() {
@@ -30,23 +30,23 @@ export default function HomePage() {
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
             <div className="container mx-auto px-4 py-8">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-2">
                     <div className="text-center flex-1">
-                        <h1 className="text-4xl font-bold mb-2 bg-clip-text">
+                        <h1 className="sm:text-4xl text-2xl font-bold mb-2 bg-clip-text">
                             🧩 Crack the Code
                         </h1>
-                        <p className="text-muted-foreground">
-                            Challenge your mind with number and word puzzles
-                        </p>
                     </div>
                     <Button variant="outline" size="sm" onClick={toggleTheme} className="ml-4">
                         {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                     </Button>
                 </div>
+                <p className="text-muted-foreground text-center mb-8 text-sm sm:text-base">
+                    Challenge your mind with number and word puzzles
+                </p>
 
                 {/* Stats */}
                 {gameStats.gamesPlayed > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 mt-6">
                         <Card>
                             <CardContent className="p-4 text-center">
                                 <div className="text-2xl font-bold text-primary">{gameStats.gamesPlayed}</div>
@@ -78,7 +78,7 @@ export default function HomePage() {
                 <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
                     {/* Game Modes */}
                     <div className="space-y-6">
-                        <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+                        <h2 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center gap-2">
                             <Trophy className="w-6 h-6" />
                             Choose Game Mode
                         </h2>
@@ -90,16 +90,16 @@ export default function HomePage() {
                                         key={mode.id}
                                         onClick={() => setSelectedMode(mode.id)}
                                         className={`cursor-pointer transition-all hover:shadow-lg ${selectedMode === mode.id
-                                                ? 'ring-2 ring-primary border-primary'
-                                                : 'hover:border-primary/50'
+                                            ? 'ring-2 ring-primary border-primary'
+                                            : 'hover:border-primary/50'
                                             }`}
                                     >
-                                        <CardContent className="p-6">
+                                        <CardContent className="p-2 sm:p-4">
                                             <div className="flex items-center space-x-4">
                                                 <div
-                                                    className={`w-12 h-12 rounded-lg flex items-center justify-center ${selectedMode === mode.id
-                                                            ? 'bg-primary text-white'
-                                                            : 'bg-muted text-black'
+                                                    className={`w-8 sm:w-12 h-8 sm:h-12 rounded-lg flex items-center justify-center ${selectedMode === mode.id
+                                                        ? 'bg-primary text-white'
+                                                        : 'bg-muted text-black'
                                                         }`}
                                                 >
                                                     <Icon className="w-6 h-6" />
@@ -120,7 +120,7 @@ export default function HomePage() {
 
                     {/* Difficulty Levels */}
                     <div className="space-y-6">
-                        <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+                        <h2 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center gap-2">
                             <Target className="w-6 h-6" />
                             Choose Difficulty
                         </h2>
@@ -132,16 +132,16 @@ export default function HomePage() {
                                         key={difficulty.id}
                                         onClick={() => setSelectedDifficulty(difficulty.id)}
                                         className={`cursor-pointer transition-all hover:shadow-lg ${selectedDifficulty === difficulty.id
-                                                ? 'ring-2 ring-primary border-primary'
-                                                : 'hover:border-primary/50'
+                                            ? 'ring-2 ring-primary border-primary'
+                                            : 'hover:border-primary/50'
                                             }`}
                                     >
-                                        <CardContent className="p-6">
+                                        <CardContent className="p-2 sm:p-4">
                                             <div className="flex items-center space-x-4">
                                                 <div
-                                                    className={`w-12 h-12 rounded-lg flex items-center justify-center ${selectedDifficulty === difficulty.id
-                                                            ? 'bg-primary text-white'
-                                                            : 'bg-muted text-black'
+                                                    className={`w-8 sm:w-12 h-8 sm:h-12 rounded-lg flex items-center justify-center ${selectedDifficulty === difficulty.id
+                                                        ? 'bg-primary text-white'
+                                                        : 'bg-muted text-black'
                                                         }`}
                                                 >
                                                     <Icon className="w-6 h-6" />
@@ -167,10 +167,10 @@ export default function HomePage() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-                    <Button size="lg" onClick={handleStartGame} className="px-8 py-3 text-lg">
+                    <Button size="lg" onClick={handleStartGame}>
                         Start {selectedMode === 'number' ? 'Number' : 'Word'} Game
                     </Button>
-                    <Button size="lg" variant="outline" onClick={() => navigate('/create')} className="px-8 py-3 text-lg">
+                    <Button size="lg" variant="outline" onClick={() => navigate('/create')}>
                         Create Custom Game
                     </Button>
                 </div>
@@ -195,8 +195,8 @@ export default function HomePage() {
                                 <h4 className="font-semibold mb-2">📝 Word Mode</h4>
                                 <ul className="text-sm text-muted-foreground space-y-1">
                                     <li>• Guess a 5-letter English word</li>
-                                    <li>• All letters must form a valid word</li>
                                     <li>• Letters can repeat in the target word</li>
+                                    <li>• Use feedback to narrow down the answer</li>
                                 </ul>
                             </div>
                         </div>

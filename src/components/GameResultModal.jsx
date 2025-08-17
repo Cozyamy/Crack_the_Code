@@ -22,28 +22,44 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
   };
 
   const getPerformanceMessage = () => {
-    if (!currentGame.isWon) return 'Better luck next time!';
+  if (!currentGame.isWon) return 'Better luck next time!';
 
-    const percentage = (currentGame.attempts.length / currentGame.maxAttempts) * 100;
-    if (percentage <= 20) return 'Incredible! 🏆';
-    if (percentage <= 40) return 'Excellent! 🌟';
-    if (percentage <= 60) return 'Great job! 👏';
-    if (percentage <= 80) return 'Well done! 👍';
-    return 'Nice work! 😊';
-  };
+  if (currentGame.difficulty === 'insane') {
+    if (currentGame.attempts.length <= 5) return 'Unbelievable. 🧠';
+    if (currentGame.attempts.length <= 10) return 'Mind-blowing! 🤯';
+    return 'That was brutal. 🔥';
+  }
+
+  if (currentGame.maxAttempts === Infinity) {
+    if (currentGame.attempts.length <= 5) return 'Incredible! 🧠';
+    if (currentGame.attempts.length <= 10) return 'Great thinking! 💡';
+    return 'You cracked it! 🧩';
+  }
+
+  const percentage = (currentGame.attempts.length / currentGame.maxAttempts) * 100;
+  if (percentage <= 20) return 'Incredible! 🏆';
+  if (percentage <= 40) return 'Excellent! 🌟';
+  if (percentage <= 60) return 'Great job! 👏';
+  if (percentage <= 80) return 'Well done! 👍';
+  return 'Nice work! 😊';
+};
 
   const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'easy':
-        return 'text-green-100 bg-green-800 border-green-200';
-      case 'medium':
-        return 'text-yellow-100 bg-yellow-800 border-yellow-200';
-      case 'hard':
-        return 'text-red-100 bg-red-800 border-red-200';
-      default:
-        return 'text-gray-100 bg-gray-800 border-gray-200';
-    }
-  };
+  switch (difficulty) {
+    case 'easy':
+      return 'text-green-100 bg-green-800 border-green-200';
+    case 'medium':
+      return 'text-yellow-100 bg-yellow-800 border-yellow-200';
+    case 'hard':
+      return 'text-red-100 bg-red-800 border-red-200';
+    case 'expert':
+      return 'text-purple-100 bg-purple-800 border-purple-200';
+    case 'insane':
+      return 'text-pink-100 bg-pink-800 border-pink-200';
+    default:
+      return 'text-gray-100 bg-gray-800 border-gray-200';
+  }
+};
 
   return (
     <>
@@ -88,7 +104,7 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
             <div className="flex justify-between items-center">
               <span className="font-medium">Attempts:</span>
               <Badge variant={currentGame.isWon ? 'default' : 'destructive'}>
-                {currentGame.attempts.length} / {currentGame.maxAttempts}
+                {currentGame.attempts.length} / {currentGame.maxAttempts === Infinity ? '∞' : currentGame.maxAttempts}
               </Badge>
             </div>
 

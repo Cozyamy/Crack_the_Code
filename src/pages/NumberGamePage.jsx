@@ -1,32 +1,38 @@
-// src/pages/NumberGamePage.jsx
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Card, CardContent } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { useGame } from '../components/GameContext';
 import { GameResultModal } from '../components/GameResultModal';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 
 export default function NumberGamePage() {
+    const inputRef = useRef(null);
+    const scrollContainerRef = useRef(null);
     const navigate = useNavigate();
     const [guess, setGuess] = useState('');
-    const [guesses, setGuesses] = useState([]);
-    const [isGameOver, setIsGameOver] = useState(false);
+
     const { currentGame, endGame, setCurrentGame, restartGame } = useGame();
+    const guesses = currentGame?.attempts || [];
+    const [showMisplaced, setShowMisplaced] = useState(true);
 
-    if (!currentGame || currentGame.mode !== 'number') {
-        navigate('/');
-        return null;
-    }
+    const isGameOver =
+        currentGame?.isWon ||
+        (currentGame?.maxAttempts !== Infinity &&
+            currentGame?.attempts.length >= currentGame?.maxAttempts);
 
-    const { difficulty, answer } = currentGame;
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'auto' }); // optional but safe
+        if (inputRef.current) {
+            inputRef.current.focus({ preventScroll: true });
+        }
+    }, []);
 
     const handleGuess = () => {
         if (guess.length !== 4 || !/^\d{4}$/.test(guess)) return;
 
-        const result = checkNumberGuess(guess, answer);
+        const result = checkNumberGuess(guess, answer, difficulty, showMisplaced);
         const newGuesses = [...guesses, { guess, result }];
-        setGuesses(newGuesses);
         setGuess('');
         setCurrentGame(prev => ({
             ...prev,
@@ -34,36 +40,47 @@ export default function NumberGamePage() {
         }));
 
         if (guess === answer) {
-            setIsGameOver(true);
+            // setIsGameOver(true);
             endGame(true);
         } else if (newGuesses.length >= currentGame.maxAttempts) {
-            setIsGameOver(true);
+            // setIsGameOver(true);
             endGame(false);
         }
     };
 
+    if (!currentGame || currentGame.mode !== 'number') {
+        return null;
+    }
+
+    // localStorage.setItem('gameStatus', JSON.stringify({ isOver: true, outcome: 'win' }));
+
+    const { difficulty, answer } = currentGame;
+
     return (
         <div className="container mx-auto p-6 max-w-3xl">
-            <div className="flex justify-between items-center mb-6">
-                {/* Left: Back button */}
-                <button
-                    onClick={() => navigate('/')}
-                    className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 p-2"
-                >
-                    <ArrowLeft className="w-5 h-5" />
-                    Back to Home
-                </button>
+            <div className="relative flex flex-col sm:flex-row sm:justify-between sm:items-center sm:px-4 sm:mb-6 mb-12">
+                {/* Back Button - left */}
+                <div className="absolute left-0 top-0 sm:static">
+                    <button
+                        onClick={() => {
+                            navigate('/');
+                        }}
+                        className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 px-2 py-1 text-sm sm:text-base"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                        Back to Home
+                    </button>
+                </div>
 
-                {/* Center: Mode info and difficulty */}
-                <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 font-semibold text-gray-700 dark:text-gray-300 text-xl">
-                        {/* You can replace this with your number mode icon */}
-                        <div className="w-6 h-6 rounded bg-blue-500 text-white flex items-center justify-center font-mono text-xl">
+                {/* Center: Mode + Difficulty */}
+                <div className="mt-12 sm:mt-0 text-center sm:flex-1 sm:flex sm:flex-col sm:items-center">
+                    <div className="flex justify-center items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 text-lg sm:text-xl">
+                        <div className="w-6 h-6 rounded bg-blue-500 text-white flex items-center justify-center font-mono text-lg sm:text-xl">
                             🔢
                         </div>
-                        <span className="text-xl">Number Mode</span>
+                        <span>Number Mode</span>
                     </div>
-                    <div className="mt-1 text-xs text-green-600 dark:text-green-400 border rounded-md border-gray-200 dark:border-gray-700 px-2 py-0.5">
+                    <div className="mt-1 text-xs text-green-600 dark:text-green-400 border rounded-md border-gray-200 dark:border-gray-700 px-2 py-0.5 inline-block">
                         <span className="uppercase font-mono pr-2">
                             {difficulty} -
                         </span>
@@ -73,94 +90,214 @@ export default function NumberGamePage() {
                     </div>
                 </div>
 
-                {/* Right: New Game button */}
-                <button
-                    onClick={() => {
-                        restartGame();
-                        setIsGameOver(false);
-                        setGuesses([]);
-                        setGuess('');
-                        // Optionally restart game logic here if available
-                    }}
-                    className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 p-2"
-                >
-                    <RotateCcw className="w-5 h-5" />
-                    New Game
-                </button>
+                {/* New Game Button - right */}
+                <div className="absolute right-0 top-0 sm:static">
+                    <button
+                        onClick={() => {
+                            restartGame();
+                            // setIsGameOver(false);
+                            setGuess('');
+                        }}
+                        className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 px-2 py-1 text-sm sm:text-base"
+                    >
+                        <RotateCcw className="w-5 h-5" />
+                        New Game
+                    </button>
+                </div>
             </div>
             <Card>
-                <CardContent className="space-y-4">
-                    {/* <div className="text-muted-foreground">
-                        Attempts left: <strong>{currentGame.maxAttempts - guesses.length}</strong>
-                    </div> */}
-                    <div className="mb-2 border rounded-md border-gray-200 dark:border-gray-700 p-4">
-                        <div className="flex flex-row justify-between">
-                            <div className="text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">
-                                Progress
-                            </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-right font-mono">
-                                {currentGame.attempts.length} / {currentGame.maxAttempts} Attempts
-                            </div>
+                <div className="mb-2 border rounded-md border-gray-200 dark:border-gray-700 p-4">
+                    {/* <div className="border-b border-gray-200 dark:border-gray-700 p-4 bg-background sticky top-0 z-10"> */}
+
+                    {difficulty === 'insane' && (
+                        <div className="mt-2 text-sm flex items-center gap-2 justify-center">
+                            <label className="flex items-center gap-1 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={showMisplaced}
+                                    onChange={(e) => setShowMisplaced(e.target.checked)}
+                                />
+                                Show Misplaced Feedback
+                            </label>
                         </div>
-                        <div className="w-full h-3 bg-gray-300 dark:bg-gray-700 rounded overflow-hidden">
-                            <div
-                                className="h-3 bg-blue-600"
-                                style={{ width: `${(currentGame.attempts.length / currentGame.maxAttempts) * 100}%` }}
-                            ></div>
+                    )}
+                    <div className="flex flex-row justify-between">
+                        <div className="text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">
+                            Progress
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-right font-mono">
+                            {currentGame.attempts.length} / {currentGame.maxAttempts} Attempts
                         </div>
                     </div>
-
-                    {/* Guess history */}
-                    <div className="space-y-2">
-                        {guesses.map((entry, i) => (
-                            <div key={i} className="flex gap-4 items-center">
-                                <div className="font-mono text-lg">{entry.guess}</div>
-                                <div className="flex gap-1">
-                                    {entry.result.map((color, j) => (
-                                        <span
-                                            key={j}
-                                            className={`w-4 h-4 rounded-full border ${color === 'correct'
-                                                ? 'bg-green-500'
-                                                : color === 'misplaced'
-                                                    ? 'bg-yellow-500'
-                                                    : 'bg-gray-400'
-                                                }`}
-                                        ></span>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
+                    <div className="w-full h-3 bg-gray-300 dark:bg-gray-700 rounded overflow-hidden">
+                        <div
+                            className="h-3 bg-blue-600"
+                            style={{
+                                width: currentGame.maxAttempts === Infinity
+                                    ? '100%' // or maybe 'auto' or hide bar completely
+                                    : `${(currentGame.attempts.length / currentGame.maxAttempts) * 100}%`
+                            }}
+                        ></div>
                     </div>
-
-                    {/* Input */}
-                    {!isGameOver && (
+                </div>
+                {!isGameOver && (
+                    <div className="p-4 border-b bg-background">
                         <form
                             onSubmit={(e) => {
-                                e.preventDefault(); // prevent page reload
+                                e.preventDefault();
                                 handleGuess();
                             }}
                             className="flex gap-2"
                         >
                             <input
+                                ref={inputRef}
                                 type="text"
                                 maxLength="4"
                                 value={guess}
                                 onChange={(e) => setGuess(e.target.value.replace(/\D/g, ''))}
-                                className="flex-1 p-2 rounded border bg-background text-foreground"
+                                className="flex-1 p-1.5 text-sm sm:p-2 sm:text-base rounded border bg-background text-foreground"
                                 placeholder="Enter 4-digit number"
                             />
-                            <Button type="submit">Guess</Button>
+                            <Button type="submit" className="p-1.5 text-sm sm:p-2 sm:text-base">
+                                Guess
+                            </Button>
                         </form>
-                    )}
+                    </div>
+                )}
+
+                <CardContent className="space-y-2" ref={scrollContainerRef}>
+                    {[...guesses].reverse().map((entry, i) => (
+                        <div key={i} className="flex gap-4 items-center">
+                            <div className="font-mono text-lg">{entry.guess}</div>
+                            {difficulty === 'insane' && entry.result.summary ? (
+                                <div className="text-sm text-gray-600 dark:text-gray-400 font-mono">
+                                    {entry.result.correct} digit{entry.result.correct !== 1 ? 's' : ''} in correct position
+                                    {showMisplaced && `, ${entry.result.misplaced} misplaced`}
+                                </div>
+                            ) : (
+                                <div className="flex gap-1">
+                                    {entry.result.map((color, j) => {
+                                        if (difficulty === 'expert' && color !== 'correct') {
+                                            return (
+                                                <span
+                                                    key={j}
+                                                    className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent"
+                                                ></span>
+                                            );
+                                        }
+
+                                        return (
+                                            <span
+                                                key={j}
+                                                className={`w-4 h-4 rounded-full border ${color === 'correct'
+                                                    ? 'bg-green-500'
+                                                    : color === 'misplaced'
+                                                        ? 'bg-yellow-500'
+                                                        : 'bg-gray-400'
+                                                    }`}
+                                            ></span>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+            <Card className="mt-8 max-w-3xl mx-auto">
+                <CardHeader>
+                    <CardTitle>Difficulty Levels</CardTitle>
+                    <CardDescription>How feedback changes depending on difficulty</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6 p-6">
+                    {/* Easy */}
+                    <div>
+                        <strong>Easy (10 guesses):</strong>
+                        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-4 mt-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-green-500 rounded-full border" />
+                                <span>Correct digit & position</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-yellow-500 rounded-full border" />
+                                <span>Correct digit, wrong position</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-gray-400 rounded-full border" />
+                                <span>Digit not present</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Medium */}
+                    <div>
+                        <strong>Medium (7 guesses):</strong>
+                        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-4 mt-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-green-500 rounded-full border" />
+                                <span>Correct digit & position</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-yellow-500 rounded-full border" />
+                                <span>Correct digit, wrong position</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-gray-400 rounded-full border" />
+                                <span>Digit not present</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Hard */}
+                    <div>
+                        <strong>Hard (5 guesses):</strong>
+                        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-4 mt-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-yellow-500 rounded-full border" />
+                                <span>Correct digit (position not shown)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-gray-400 rounded-full border" />
+                                <span>Digit not present</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Expert */}
+                    <div>
+                        <strong>Expert (5 guesses):</strong>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-green-500 rounded-full border" />
+                                <span>Correct digit only</span>
+                            </div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                                No feedback is given for wrong or misplaced digits.
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Insane */}
+                    <div>
+                        <strong>Insane (∞ guesses):</strong>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Summary feedback only:
+                            <ul className="list-disc list-inside mt-1">
+                                <li><strong>Correct:</strong> Number of digits in the correct position</li>
+                                <li><strong>Misplaced:</strong> (Optional) Number of correct digits in the wrong position</li>
+                            </ul>
+                            <p className="mt-1">Use the checkbox to toggle misplaced feedback.</p>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
             <GameResultModal
                 isOpen={isGameOver}
                 onClose={() => { /* do nothing or leave empty to prevent modal closing */ }}
                 onPlayAgain={() => {
-                    setIsGameOver(false);
+                    // setIsGameOver(false);
                     setGuess('');
-                    setGuesses([]);
+                    setCurrentGame(prev => ({ ...prev, attempts: [] }));
                 }}
                 onShare={() => {
                     // Your share logic here
@@ -172,7 +309,7 @@ export default function NumberGamePage() {
 }
 
 // Feedback checker function
-function checkNumberGuess(guess, answer) {
+function checkNumberGuess(guess, answer, difficulty, showMisplaced) {
     const result = Array(4).fill('absent');
     const answerArray = answer.split('');
     const guessArray = guess.split('');
@@ -181,18 +318,52 @@ function checkNumberGuess(guess, answer) {
     guessArray.forEach((digit, i) => {
         if (digit === answerArray[i]) {
             result[i] = 'correct';
-            answerArray[i] = null; // prevent re-use
+            answerArray[i] = null;
             guessArray[i] = null;
         }
     });
 
-    // Second pass: misplaced digits
-    guessArray.forEach((digit, i) => {
-        if (digit && answerArray.includes(digit)) {
-            result[i] = 'misplaced';
-            answerArray[answerArray.indexOf(digit)] = null;
+    if (difficulty === 'insane') {
+        const numCorrect = result.filter(r => r === 'correct').length;
+
+        // Count misplaced (wrong position but present elsewhere)
+        const remainingAnswer = answer.split('').filter((_, i) => result[i] !== 'correct');
+        const remainingGuess = guess.split('').filter((_, i) => result[i] !== 'correct');
+
+        let numMisplaced = 0;
+        const used = new Set();
+        for (let digit of remainingGuess) {
+            const index = remainingAnswer.findIndex((d, idx) => d === digit && !used.has(idx));
+            if (index !== -1) {
+                numMisplaced++;
+                used.add(index);
+            }
         }
-    });
+
+        return {
+            summary: true,
+            correct: numCorrect,
+            misplaced: numMisplaced
+        };
+    }
+
+    if (difficulty !== 'expert' && showMisplaced) {
+        guessArray.forEach((digit, i) => {
+            if (digit && answerArray.includes(digit)) {
+                result[i] = 'misplaced';
+                answerArray[answerArray.indexOf(digit)] = null;
+            }
+        });
+    }
+
+    if (difficulty === 'expert') {
+        return result.map(r => (r === 'correct' ? 'correct' : 'none'));
+    }
+
+    // Hard mode — no position info
+    if (difficulty === 'hard') {
+        return result.map(r => (r === 'correct' ? 'misplaced' : r));
+    }
 
     return result;
 }

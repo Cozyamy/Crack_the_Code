@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { GameMode, Difficulty } from './constants';
 import { possibleAnswers as rawPossibleAnswers, allowedGuesses as rawAllowedGuesses } from './wordLists';
 
@@ -9,13 +9,36 @@ const possibleAnswers = rawPossibleAnswers.map(w => w.trim().toLowerCase());
 const GameContext = createContext();
 
 export const GameProvider = ({ children }) => {
-  const [currentGame, setCurrentGame] = useState(null);
-  const [gameStats, setGameStats] = useState({
-    gamesPlayed: 0,
-    gamesWon: 0,
-    currentStreak: 0,
-    maxStreak: 0,
+  const [currentGame, setCurrentGame] = useState(() => {
+    const savedGame = localStorage.getItem('currentGame');
+    return savedGame ? JSON.parse(savedGame) : null;
   });
+
+  const [gameStats, setGameStats] = useState(() => {
+    const savedStats = localStorage.getItem('gameStats');
+    return savedStats
+      ? JSON.parse(savedStats)
+      : {
+        gamesPlayed: 0,
+        gamesWon: 0,
+        currentStreak: 0,
+        maxStreak: 0,
+      };
+  });
+
+  // Save currentGame to localStorage
+  useEffect(() => {
+    if (currentGame) {
+      localStorage.setItem('currentGame', JSON.stringify(currentGame));
+    } else {
+      localStorage.removeItem('currentGame');
+    }
+  }, [currentGame]);
+
+  // Save gameStats to localStorage
+  useEffect(() => {
+    localStorage.setItem('gameStats', JSON.stringify(gameStats));
+  }, [gameStats]);
 
   const isValidGuess = (guess) => {
     if (!guess || guess.length !== 5) return false;
@@ -42,6 +65,9 @@ export const GameProvider = ({ children }) => {
         return 7;
       case Difficulty.HARD:
         return 5;
+      case Difficulty.EXPERT:
+      case Difficulty.INSANE:
+        return Infinity;
       default:
         return 10;
     }

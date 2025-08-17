@@ -16,7 +16,7 @@ export const CardHeader = ({ children }) => (
 );
 
 export const CardContent = ({ children, className = '' }) => (
-  <div className={`p-4 ${className}`}>{children}</div>
+  <div className={`p-2 sm:p-4 ${className}`}>{children}</div>
 );
 
 export const CardTitle = ({ children }) => (
