@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -7,96 +7,62 @@ import { GameResultModal } from '../components/GameResultModal';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 
 export default function WordGamePage() {
+  const inputRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
-  const { currentGame, endGame, setCurrentGame, isValidGuess, restartGame } = useGame();
-  const guesses = currentGame?.attempts || [];
-  const [validationMessage, setValidationMessage] = useState('');
-
   const [guess, setGuess] = useState('');
 
+  const { currentGame, endGame, setCurrentGame, restartGame } = useGame();
+  const guesses = currentGame?.attempts || [];
   const [showMisplaced, setShowMisplaced] = useState(true);
 
+  const isGameOver =
+    currentGame?.isWon ||
+    (currentGame?.maxAttempts !== Infinity &&
+      currentGame?.attempts.length >= currentGame?.maxAttempts);
+
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'auto' }); // optional but safe
+    if (inputRef.current) {
+      inputRef.current.focus({ preventScroll: true });
+    }
   }, []);
 
-  const isGameOver = currentGame?.isWon || (currentGame?.maxAttempts !== Infinity && currentGame?.attempts.length >= currentGame?.maxAttempts);
+  const handleGuess = () => {
+  if (guess.length !== 5 || !/^[A-Z]{5}$/.test(guess)) return;
 
-  useEffect(() => {
-    if (currentGame && currentGame.mode !== 'word') {
-      navigate('/');
-    }
-  }, [currentGame, navigate]);
+  const normalizedGuess = guess.toLowerCase(); // 🔥 make it lowercase for logic
+  const result = checkWordGuess(normalizedGuess, answer, difficulty, showMisplaced);
+  const newGuesses = [...guesses, { guess, result }]; // note: keep UI guess in uppercase form
+
+  setGuess('');
+  setCurrentGame(prev => ({
+    ...prev,
+    attempts: [...prev.attempts, { guess, result }], // keep uppercase version for display
+  }));
+
+  if (normalizedGuess === answer) {
+    endGame(true);
+  } else if (newGuesses.length >= currentGame.maxAttempts) {
+    endGame(false);
+  }
+};
 
   if (!currentGame || currentGame.mode !== 'word') {
-    return <p>Loading game...</p>; // or null
-  }
+  return null;
+}
 
-  const { answer, maxAttempts, difficulty } = currentGame;
-  const normalizedDifficulty = difficulty.toUpperCase();
-  console.log('Difficulty (raw):', difficulty);
-  console.log('Difficulty (normalized):', normalizedDifficulty);
+  // localStorage.setItem('gameStatus', JSON.stringify({ isOver: true, outcome: 'win' }));
 
-  const handleGuess = () => {
-    const normalized = guess.toUpperCase();
-
-    if (normalized.length !== 5 || !/^[A-Z]{5}$/.test(normalized)) {
-      setValidationMessage('Please enter a valid 5-letter word.');
-      return;
-    }
-
-    if (!isValidGuess(normalized)) {
-      setValidationMessage('Invalid guess! Word not in allowed list.');
-      return;
-    }
-
-    // Clear validation message on valid guess
-    setValidationMessage('');
-
-    const result = checkWordGuess(normalized, answer, difficulty, showMisplaced);
-    console.log('Guess result:', result);
-    const newGuesses = [...guesses, { guess: normalized, result }];
-    setGuess('');
-
-    setCurrentGame(prev => ({
-      ...prev,
-      attempts: newGuesses,
-    }));
-
-    if (normalized === answer) {
-      setCurrentGame(prev => ({
-        ...prev,
-        attempts: newGuesses,
-        isWon: true,       // Add this!
-        isOver: true       // optional, if you use isOver to track game end
-      }));
-      endGame(true);
-    } else if (newGuesses.length >= maxAttempts) {
-      setCurrentGame(prev => ({
-        ...prev,
-        attempts: newGuesses,
-        isWon: false,
-        isOver: true
-      }));
-      endGame(false);
-    } else {
-      // Just update attempts if game not over yet
-      setCurrentGame(prev => ({
-        ...prev,
-        attempts: newGuesses,
-      }));
-    }
-  };
+  const { difficulty, answer } = currentGame;
 
   return (
     <div className="container mx-auto p-6 max-w-3xl">
-      {/* Header */}
       <div className="relative flex flex-col sm:flex-row sm:justify-between sm:items-center sm:px-4 sm:mb-6 mb-12">
         {/* Back Button - left */}
         <div className="absolute left-0 top-0 sm:static">
           <button
             onClick={() => {
-              // localStorage.removeItem('isGameOver');
               navigate('/');
             }}
             className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 px-2 py-1 text-sm sm:text-base"
@@ -129,6 +95,7 @@ export default function WordGamePage() {
           <button
             onClick={() => {
               restartGame();
+              // setIsGameOver(false);
               setGuess('');
             }}
             className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 px-2 py-1 text-sm sm:text-base"
@@ -138,42 +105,43 @@ export default function WordGamePage() {
           </button>
         </div>
       </div>
-
-      {/* Main Card */}
       <Card>
-        <CardContent className="space-y-4">
-          {/* Progress bar */}
-          <div className="mb-2 border rounded-md border-gray-200 dark:border-gray-700 p-4">
-            {difficulty === 'insane' && (
-              <div className="mt-2 text-sm flex items-center gap-2 justify-center">
-                <label className="flex items-center gap-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showMisplaced}
-                    onChange={(e) => setShowMisplaced(e.target.checked)}
-                  />
-                  Show Misplaced Feedback
-                </label>
-              </div>
-            )}
-            <div className="flex flex-row justify-between">
-              <div className="text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">
-                Progress
-              </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-right font-mono">
-                {currentGame.attempts.length} / {maxAttempts} Attempts
-              </div>
+        <div className="mb-2 border rounded-md border-gray-200 dark:border-gray-700 p-4">
+          {/* <div className="border-b border-gray-200 dark:border-gray-700 p-4 bg-background sticky top-0 z-10"> */}
+
+          {difficulty === 'insane' && (
+            <div className="mt-2 text-sm flex items-center gap-2 justify-center">
+              <label className="flex items-center gap-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showMisplaced}
+                  onChange={(e) => setShowMisplaced(e.target.checked)}
+                />
+                Show Misplaced Feedback
+              </label>
             </div>
-            <div className="w-full h-3 bg-gray-300 dark:bg-gray-700 rounded overflow-hidden">
-              <div
-                className="h-3 bg-purple-600"
-                style={{ width: `${(currentGame.attempts.length / maxAttempts) * 100}%` }}
-              ></div>
+          )}
+          <div className="flex flex-row justify-between">
+            <div className="text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">
+              Progress
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-right font-mono">
+              {currentGame.attempts.length} / {currentGame.maxAttempts} Attempts
             </div>
           </div>
-
-          {/* Input */}
-          {!isGameOver && (
+          <div className="w-full h-3 bg-gray-300 dark:bg-gray-700 rounded overflow-hidden">
+            <div
+              className="h-3 bg-blue-600"
+              style={{
+                width: currentGame.maxAttempts === Infinity
+                  ? '100%' // or maybe 'auto' or hide bar completely
+                  : `${(currentGame.attempts.length / currentGame.maxAttempts) * 100}%`
+              }}
+            ></div>
+          </div>
+        </div>
+        {!isGameOver && (
+          <div className="p-4 border-b bg-background">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -182,75 +150,60 @@ export default function WordGamePage() {
               className="flex gap-2"
             >
               <input
+                ref={inputRef}
                 type="text"
                 maxLength="5"
                 value={guess}
                 onChange={(e) => {
                   setGuess(e.target.value.toUpperCase());
-                  setValidationMessage('');
                 }}
                 className="flex-1 p-1.5 text-sm sm:p-2 sm:text-base rounded border bg-background text-foreground uppercase"
                 placeholder="Enter 5-letter word"
               />
-              <Button type="submit" className="p-1.5 text-sm sm:p-2 sm:text-base">Guess</Button>
+              <Button type="submit" className="p-1.5 text-sm sm:p-2 sm:text-base">
+                Guess
+              </Button>
             </form>
-          )}
-          {validationMessage && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400 font-semibold">
-              {validationMessage}
-            </p>
-          )}
-
-          {/* Guess history */}
-          <div className="space-y-2">
-            {[...guesses].reverse().map((entry, i) => (
-              <div key={i} className="flex flex-wrap gap-2">
-                {(() => {
-                  if (entry.result.summary) {
-                    return (
-                      <div className="flex flex-col">
-                        <div className="flex gap-2 mb-1">
-                          {entry.guess.split('').map((char, j) => (
-                            <div
-                              key={j}
-                              className="w-10 h-10 flex items-center justify-center font-mono font-bold text-lg border border-gray-300 rounded text-gray-800 dark:text-gray-200 dark:border-gray-600"
-                            >
-                              {char}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 font-mono ml-1">
-                          {entry.result.correct} letter{entry.result.correct !== 1 ? 's' : ''} in correct position
-                          {entry.result.misplaced !== undefined ? `, ${entry.result.misplaced} misplaced` : ''}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return entry.guess.split('').map((char, j) => {
-                    const resultType = entry.result[j];
-                    const displayChar = char;
-
-                    const baseClass = 'w-10 h-10 flex items-center justify-center font-mono font-bold text-lg border rounded';
-                    const colorClass =
-                      resultType === 'correct'
-                        ? 'bg-green-500 text-white'
-                        : resultType === 'misplaced'
-                          ? 'bg-yellow-500 text-white'
-                          : resultType === 'none'
-                            ? 'bg-transparent border border-gray-400 text-gray-400' // EXPERT mode: no feedback
-                            : 'bg-gray-400 text-white'; // default for absent
-
-                    return (
-                      <div key={j} className={`${baseClass} ${colorClass}`}>
-                        {displayChar}
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            ))}
           </div>
+        )}
+
+        <CardContent className="space-y-2" ref={scrollContainerRef}>
+          {[...guesses].reverse().map((entry, i) => (
+            <div key={i} className="flex gap-4 items-center">
+              <div className="font-mono text-lg">{entry.guess}</div>
+              {difficulty === 'insane' && entry.result.summary ? (
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-mono">
+                  {entry.result.correct} letter{entry.result.correct !== 1 ? 's' : ''} in correct position
+                  {showMisplaced && `, ${entry.result.misplaced} misplaced`}
+                </div>
+              ) : (
+                <div className="flex gap-1">
+                  {entry.result.map((color, j) => {
+                    if (difficulty === 'expert' && color !== 'correct') {
+                      return (
+                        <span
+                          key={j}
+                          className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent"
+                        ></span>
+                      );
+                    }
+
+                    return (
+                      <span
+                        key={j}
+                        className={`w-4 h-4 rounded-full border ${color === 'correct'
+                          ? 'bg-green-500'
+                          : color === 'misplaced'
+                            ? 'bg-yellow-500'
+                            : 'bg-gray-400'
+                          }`}
+                      ></span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
         </CardContent>
       </Card>
 
@@ -345,71 +298,76 @@ export default function WordGamePage() {
 
       {/* Modal */}
       <GameResultModal
-        isOpen={isGameOver}
-        onClose={() => { }}
-        onPlayAgain={() => {
-          setGuess('');
-          setCurrentGame(prev => ({ ...prev, attempts: [] }));
-        }}
-        onShare={() => {
-          alert('Share functionality not implemented yet.');
-        }}
-      />
+                isOpen={isGameOver}
+                onClose={() => { /* do nothing or leave empty to prevent modal closing */ }}
+                onPlayAgain={() => {
+                    // setIsGameOver(false);
+                    setGuess('');
+                    setCurrentGame(prev => ({ ...prev, attempts: [] }));
+                }}
+                onShare={() => {
+                    // Your share logic here
+                    alert('Share functionality not implemented yet.');
+                }}
+            />
     </div>
   );
 }
 
 // Word feedback logic (Wordle-style)
-function checkWordGuess(guess, answer, difficulty, showMisplaced = true) {
-  guess = guess.toUpperCase();
-  answer = answer.toUpperCase();
-
+function checkWordGuess(guess, answer, difficulty, showMisplaced) {
   const result = Array(5).fill('absent');
-  const answerArr = answer.split('');
-  const used = Array(5).fill(false);
+  const answerArray = answer.split('');
+  const guessArray = guess.split('');
 
   // First pass: correct letters
-  for (let i = 0; i < 5; i++) {
-    if (guess[i] === answer[i]) {
+  guessArray.forEach((letter, i) => {
+    if (letter === answerArray[i]) {
       result[i] = 'correct';
-      used[i] = true;
+      answerArray[i] = null;
+      guessArray[i] = null;
     }
-  }
+  });
 
-  // Second pass: misplaced letters
-  for (let i = 0; i < 5; i++) {
-    if (result[i] === 'correct') continue;
-    const index = answerArr.findIndex((char, j) => char === guess[i] && !used[j]);
-    if (index !== -1) {
-      result[i] = 'misplaced';
-      used[index] = true;
-    }
-  }
-
-  const mode = (difficulty || 'EASY').toUpperCase();
-
-  if (mode === 'EASY' || mode === 'MEDIUM') {
-    return result;
-  }
-
-  if (mode === 'HARD') {
-    // Hide position info — convert 'correct' to 'misplaced'
-    return result.map(r => (r === 'correct' ? 'misplaced' : r));
-  }
-
-  if (mode === 'EXPERT') {
-    // Only show correct letters — everything else is 'none'
-    return result.map(r => (r === 'correct' ? 'correct' : 'none'));
-  }
-
-  if (mode === 'INSANE') {
+  if (difficulty === 'insane') {
     const numCorrect = result.filter(r => r === 'correct').length;
-    const numMisplaced = result.filter(r => r === 'misplaced').length;
+
+    // Count misplaced (correct letter, wrong position)
+    const remainingAnswer = answer.split('').filter((_, i) => result[i] !== 'correct');
+    const remainingGuess = guess.split('').filter((_, i) => result[i] !== 'correct');
+
+    let numMisplaced = 0;
+    const used = new Set();
+    for (let letter of remainingGuess) {
+      const index = remainingAnswer.findIndex((l, idx) => l === letter && !used.has(idx));
+      if (index !== -1) {
+        numMisplaced++;
+        used.add(index);
+      }
+    }
+
     return {
       summary: true,
       correct: numCorrect,
-      misplaced: showMisplaced ? numMisplaced : undefined
+      misplaced: numMisplaced
     };
+  }
+
+  if (difficulty !== 'expert' && showMisplaced) {
+    guessArray.forEach((letter, i) => {
+      if (letter && answerArray.includes(letter)) {
+        result[i] = 'misplaced';
+        answerArray[answerArray.indexOf(letter)] = null;
+      }
+    });
+  }
+
+  if (difficulty === 'expert') {
+    return result.map(r => (r === 'correct' ? 'correct' : 'none'));
+  }
+
+  if (difficulty === 'hard') {
+    return result.map(r => (r === 'correct' ? 'misplaced' : r));
   }
 
   return result;

@@ -70,9 +70,11 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
       />
 
       {/* Modal box */}
-      <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+      {/* <div className="fixed inset-0 flex items-center justify-center z-50 px-4"> */}
+        <div className="fixed inset-0 overflow-y-auto z-50 px-4 py-6 sm:py-12">
+    
         <div
-          className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-lg relative"
+          className="bg-white dark:bg-gray-800 rounded-lg max-w-md mx-auto p-4 sm:p-6  shadow-lg relative"
           onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
         >
           <div className="text-center mb-6">
@@ -155,7 +157,7 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <Button onClick={onShare} variant="outline" className="flex items-center gap-2">
               <Share2 className="w-4 h-4" />
               Share
