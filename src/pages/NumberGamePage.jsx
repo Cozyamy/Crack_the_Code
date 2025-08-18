@@ -300,8 +300,64 @@ export default function NumberGamePage() {
                     setCurrentGame(prev => ({ ...prev, attempts: [] }));
                 }}
                 onShare={() => {
-                    // Your share logic here
-                    alert('Share functionality not implemented yet.');
+                    if (!currentGame) return;
+
+                    const { attempts, isWon, maxAttempts, difficulty } = currentGame;
+
+                    const difficultyLabel = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+                    const statusLine = isWon
+                        ? `✅ Guessed in ${attempts.length}/${maxAttempts} attempts!`
+                        : `❌ Failed after ${maxAttempts} attempts.`;
+
+                    const resultLines = attempts.map(({ result }) => {
+                        if (result.summary) {
+                            // For 'insane' mode
+                            const { correct, misplaced } = result;
+                            return `✔️ ${correct} correct${typeof misplaced === 'number' ? `, 🔀 ${misplaced} misplaced` : ''}`;
+                        }
+
+                        return result.map(color => {
+                            switch (color) {
+                                case 'correct':
+                                    return '🟩';
+                                case 'misplaced':
+                                    return '🟨';
+                                case 'none':
+                                case 'absent':
+                                default:
+                                    return '⬜';
+                            }
+                        }).join('');
+                    });
+
+                    const shareText = [
+                        '🔢 Number Mode - ' + difficultyLabel,
+                        statusLine,
+                        '',
+                        ...resultLines,
+                        '',
+                        'Play: https://yourgame.com'
+                    ].join('\n');
+
+                    // Try Web Share API first
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'Number Game Result',
+                            text: shareText,
+                            url: 'https://yourgame.com',
+                        }).catch((err) => {
+                            console.error('Share failed:', err);
+                        });
+                    } else {
+                        // Fallback: copy to clipboard
+                        navigator.clipboard.writeText(shareText)
+                            .then(() => {
+                                alert('Result copied to clipboard!');
+                            })
+                            .catch(() => {
+                                alert('Failed to copy result.');
+                            });
+                    }
                 }}
             />
         </div>

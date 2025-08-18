@@ -29,28 +29,28 @@ export default function WordGamePage() {
   }, []);
 
   const handleGuess = () => {
-  if (guess.length !== 5 || !/^[A-Z]{5}$/.test(guess)) return;
+    if (guess.length !== 5 || !/^[A-Z]{5}$/.test(guess)) return;
 
-  const normalizedGuess = guess.toLowerCase(); // 🔥 make it lowercase for logic
-  const result = checkWordGuess(normalizedGuess, answer, difficulty, showMisplaced);
-  const newGuesses = [...guesses, { guess, result }]; // note: keep UI guess in uppercase form
+    const normalizedGuess = guess.toLowerCase(); // 🔥 make it lowercase for logic
+    const result = checkWordGuess(normalizedGuess, answer, difficulty, showMisplaced);
+    const newGuesses = [...guesses, { guess, result }]; // note: keep UI guess in uppercase form
 
-  setGuess('');
-  setCurrentGame(prev => ({
-    ...prev,
-    attempts: [...prev.attempts, { guess, result }], // keep uppercase version for display
-  }));
+    setGuess('');
+    setCurrentGame(prev => ({
+      ...prev,
+      attempts: [...prev.attempts, { guess, result }], // keep uppercase version for display
+    }));
 
-  if (normalizedGuess === answer) {
-    endGame(true);
-  } else if (newGuesses.length >= currentGame.maxAttempts) {
-    endGame(false);
-  }
-};
+    if (normalizedGuess === answer) {
+      endGame(true);
+    } else if (newGuesses.length >= currentGame.maxAttempts) {
+      endGame(false);
+    }
+  };
 
   if (!currentGame || currentGame.mode !== 'word') {
-  return null;
-}
+    return null;
+  }
 
   // localStorage.setItem('gameStatus', JSON.stringify({ isOver: true, outcome: 'win' }));
 
@@ -298,18 +298,71 @@ export default function WordGamePage() {
 
       {/* Modal */}
       <GameResultModal
-                isOpen={isGameOver}
-                onClose={() => { /* do nothing or leave empty to prevent modal closing */ }}
-                onPlayAgain={() => {
-                    // setIsGameOver(false);
-                    setGuess('');
-                    setCurrentGame(prev => ({ ...prev, attempts: [] }));
-                }}
-                onShare={() => {
-                    // Your share logic here
-                    alert('Share functionality not implemented yet.');
-                }}
-            />
+        isOpen={isGameOver}
+        onClose={() => { /* do nothing or leave empty to prevent modal closing */ }}
+        onPlayAgain={() => {
+          // setIsGameOver(false);
+          setGuess('');
+          setCurrentGame(prev => ({ ...prev, attempts: [] }));
+        }}
+        onShare={() => {
+          if (!currentGame) return;
+
+          const { attempts, isWon, maxAttempts, difficulty } = currentGame;
+
+          const difficultyLabel = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+          const statusLine = isWon
+            ? `✅ Guessed in ${attempts.length}/${maxAttempts} attempts!`
+            : `❌ Failed after ${maxAttempts} attempts.`;
+
+          const resultLines = attempts.map(({ result }) => {
+            if (result.summary) {
+              const { correct, misplaced } = result;
+              return `✔️ ${correct} correct${typeof misplaced === 'number' ? `, 🔀 ${misplaced} misplaced` : ''}`;
+            }
+
+            return result.map(color => {
+              switch (color) {
+                case 'correct':
+                  return '🟩';
+                case 'misplaced':
+                  return '🟨';
+                case 'none':
+                case 'absent':
+                default:
+                  return '⬜';
+              }
+            }).join('');
+          });
+
+          const shareText = [
+            '📝 Word Mode - ' + difficultyLabel,
+            statusLine,
+            '',
+            ...resultLines,
+            '',
+            'Play: https://yourgame.com' // 🔁 Replace this with your real URL or `window.location.origin`
+          ].join('\n');
+
+          if (navigator.share) {
+            navigator.share({
+              title: 'Word Game Result',
+              text: shareText,
+              url: 'https://yourgame.com',
+            }).catch((err) => {
+              console.error('Share failed:', err);
+            });
+          } else {
+            navigator.clipboard.writeText(shareText)
+              .then(() => {
+                alert('Result copied to clipboard!');
+              })
+              .catch(() => {
+                alert('Failed to copy result.');
+              });
+          }
+        }}
+      />
     </div>
   );
 }

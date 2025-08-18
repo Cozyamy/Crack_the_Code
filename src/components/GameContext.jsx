@@ -104,6 +104,19 @@ export const GameProvider = ({ children }) => {
     console.log(`Game started. Mode: ${mode}, Difficulty: ${difficulty}, Answer: ${answer}`);
   };
 
+  const startCustomGame = ({ mode, answer, maxAttempts }) => {
+    setCurrentGame({
+      mode,
+      difficulty: 'custom',
+      answer: answer.toLowerCase(),
+      maxAttempts,
+      attempts: [],
+      timeStarted: Date.now(),
+    });
+
+    console.log(`Custom game started. Mode: ${mode}, Answer: ${answer}, Max Attempts: ${maxAttempts}`);
+  };
+
   const endGame = (won) => {
     setGameStats((prev) => {
       const updated = {
@@ -134,6 +147,7 @@ export const GameProvider = ({ children }) => {
     <GameContext.Provider
       value={{
         startGame,
+        startCustomGame, 
         currentGame,
         setCurrentGame,
         endGame,

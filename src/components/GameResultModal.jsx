@@ -22,44 +22,44 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
   };
 
   const getPerformanceMessage = () => {
-  if (!currentGame.isWon) return 'Better luck next time!';
+    if (!currentGame.isWon) return 'Better luck next time!';
 
-  if (currentGame.difficulty === 'insane') {
-    if (currentGame.attempts.length <= 5) return 'Unbelievable. 🧠';
-    if (currentGame.attempts.length <= 10) return 'Mind-blowing! 🤯';
-    return 'That was brutal. 🔥';
-  }
+    if (currentGame.difficulty === 'insane') {
+      if (currentGame.attempts.length <= 5) return 'Unbelievable. 🧠';
+      if (currentGame.attempts.length <= 10) return 'Mind-blowing! 🤯';
+      return 'That was brutal. 🔥';
+    }
 
-  if (currentGame.maxAttempts === Infinity) {
-    if (currentGame.attempts.length <= 5) return 'Incredible! 🧠';
-    if (currentGame.attempts.length <= 10) return 'Great thinking! 💡';
-    return 'You cracked it! 🧩';
-  }
+    if (currentGame.maxAttempts === Infinity) {
+      if (currentGame.attempts.length <= 5) return 'Incredible! 🧠';
+      if (currentGame.attempts.length <= 10) return 'Great thinking! 💡';
+      return 'You cracked it! 🧩';
+    }
 
-  const percentage = (currentGame.attempts.length / currentGame.maxAttempts) * 100;
-  if (percentage <= 20) return 'Incredible! 🏆';
-  if (percentage <= 40) return 'Excellent! 🌟';
-  if (percentage <= 60) return 'Great job! 👏';
-  if (percentage <= 80) return 'Well done! 👍';
-  return 'Nice work! 😊';
-};
+    const percentage = (currentGame.attempts.length / currentGame.maxAttempts) * 100;
+    if (percentage <= 20) return 'Incredible! 🏆';
+    if (percentage <= 40) return 'Excellent! 🌟';
+    if (percentage <= 60) return 'Great job! 👏';
+    if (percentage <= 80) return 'Well done! 👍';
+    return 'Nice work! 😊';
+  };
 
   const getDifficultyColor = (difficulty) => {
-  switch (difficulty) {
-    case 'easy':
-      return 'text-green-100 bg-green-800 border-green-200';
-    case 'medium':
-      return 'text-yellow-100 bg-yellow-800 border-yellow-200';
-    case 'hard':
-      return 'text-red-100 bg-red-800 border-red-200';
-    case 'expert':
-      return 'text-purple-100 bg-purple-800 border-purple-200';
-    case 'insane':
-      return 'text-pink-100 bg-pink-800 border-pink-200';
-    default:
-      return 'text-gray-100 bg-gray-800 border-gray-200';
-  }
-};
+    switch (difficulty) {
+      case 'easy':
+        return 'text-green-100 bg-green-800 border-green-200';
+      case 'medium':
+        return 'text-yellow-100 bg-yellow-800 border-yellow-200';
+      case 'hard':
+        return 'text-red-100 bg-red-800 border-red-200';
+      case 'expert':
+        return 'text-purple-100 bg-purple-800 border-purple-200';
+      case 'insane':
+        return 'text-pink-100 bg-pink-800 border-pink-200';
+      default:
+        return 'text-gray-100 bg-gray-800 border-gray-200';
+    }
+  };
 
   return (
     <>
@@ -71,8 +71,8 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
 
       {/* Modal box */}
       {/* <div className="fixed inset-0 flex items-center justify-center z-50 px-4"> */}
-        <div className="fixed inset-0 overflow-y-auto z-50 px-4 py-6 sm:py-12">
-    
+      <div className="fixed inset-0 overflow-y-auto z-50 px-4 py-6 sm:py-12">
+
         <div
           className="bg-white dark:bg-gray-800 rounded-lg max-w-md mx-auto p-4 sm:p-6  shadow-lg relative"
           onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
@@ -157,35 +157,37 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
           </div>
 
           {/* Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div className={`grid gap-3 mb-4 ${currentGame.difficulty === 'custom' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
             <Button onClick={onShare} variant="outline" className="flex items-center gap-2">
               <Share2 className="w-4 h-4" />
               Share
             </Button>
 
-            <Button
-              onClick={() => {
-                restartGame();    // Clear current game state
-                onPlayAgain();  // Reset the component state
-              }}
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Play Again
-            </Button>
+            {currentGame.difficulty !== 'custom' ? (
+              <Button
+                onClick={() => {
+                  restartGame();
+                  onPlayAgain();
+                }}
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Play Again
+              </Button>
+            ) : (
+              <Button
+                onClick={() => {
+                  navigate('/');
+                  setTimeout(() => resetGame(), 0);
+                }}
+                variant="ghost"
+                className="flex items-center gap-2"
+              >
+                <Home className="w-4 h-4" />
+                Back to Home
+              </Button>
+            )}
           </div>
-
-          <Button
-            onClick={() => {
-              navigate('/'); // navigate first
-              setTimeout(() => resetGame(), 0); // defer reset
-            }}
-            variant="ghost"
-            className="w-full flex items-center gap-2"
-          >
-            <Home className="w-4 h-4" />
-            Back to Home
-          </Button>
         </div>
       </div>
     </>
