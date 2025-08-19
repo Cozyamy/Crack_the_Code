@@ -28,7 +28,7 @@ Crack the Code is a logic-based puzzle game where players must guess a hidden nu
 * **Tailwind CSS** – For styling
 * **React Router v6** – Routing
 * **Context API** – For theme and game state
-* **Vite / Create React App** – (Adjust if needed)
+* **Vite / Create React App**
 * **Vercel** – Deployment
 
 ---
