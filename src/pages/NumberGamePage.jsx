@@ -22,7 +22,7 @@ export default function NumberGamePage() {
             currentGame?.attempts.length >= currentGame?.maxAttempts);
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'auto' }); // optional but safe
+        window.scrollTo({ top: 0, behavior: 'auto' });
         if (inputRef.current) {
             inputRef.current.focus({ preventScroll: true });
         }
@@ -40,10 +40,8 @@ export default function NumberGamePage() {
         }));
 
         if (guess === answer) {
-            // setIsGameOver(true);
             endGame(true);
         } else if (newGuesses.length >= currentGame.maxAttempts) {
-            // setIsGameOver(true);
             endGame(false);
         }
     };
@@ -51,8 +49,6 @@ export default function NumberGamePage() {
     if (!currentGame || currentGame.mode !== 'number') {
         return null;
     }
-
-    // localStorage.setItem('gameStatus', JSON.stringify({ isOver: true, outcome: 'win' }));
 
     const { difficulty, answer } = currentGame;
 
@@ -95,7 +91,6 @@ export default function NumberGamePage() {
                     <button
                         onClick={() => {
                             restartGame();
-                            // setIsGameOver(false);
                             setGuess('');
                         }}
                         className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 px-2 py-1 text-sm sm:text-base"
@@ -107,7 +102,6 @@ export default function NumberGamePage() {
             </div>
             <Card>
                 <div className="mb-2 border rounded-md border-gray-200 dark:border-gray-700 p-4">
-                    {/* <div className="border-b border-gray-200 dark:border-gray-700 p-4 bg-background sticky top-0 z-10"> */}
 
                     {difficulty === 'insane' && (
                         <div className="mt-2 text-sm flex items-center gap-2 justify-center">
@@ -134,7 +128,7 @@ export default function NumberGamePage() {
                             className="h-3 bg-blue-600"
                             style={{
                                 width: currentGame.maxAttempts === Infinity
-                                    ? '100%' // or maybe 'auto' or hide bar completely
+                                    ? '100%'
                                     : `${(currentGame.attempts.length / currentGame.maxAttempts) * 100}%`
                             }}
                         ></div>
@@ -293,9 +287,8 @@ export default function NumberGamePage() {
             </Card>
             <GameResultModal
                 isOpen={isGameOver}
-                onClose={() => { /* do nothing or leave empty to prevent modal closing */ }}
+                onClose={() => { /* empty to prevent modal closing */ }}
                 onPlayAgain={() => {
-                    // setIsGameOver(false);
                     setGuess('');
                     setCurrentGame(prev => ({ ...prev, attempts: [] }));
                 }}
@@ -336,7 +329,7 @@ export default function NumberGamePage() {
                         '',
                         ...resultLines,
                         '',
-                        'Play: https://yourgame.com'
+                        'Play: https://crack-the-code-nine.vercel.app'
                     ].join('\n');
 
                     // Try Web Share API first
@@ -344,7 +337,7 @@ export default function NumberGamePage() {
                         navigator.share({
                             title: 'Number Game Result',
                             text: shareText,
-                            url: 'https://yourgame.com',
+                            url: 'https://crack-the-code-nine.vercel.app',
                         }).catch((err) => {
                             console.error('Share failed:', err);
                         });

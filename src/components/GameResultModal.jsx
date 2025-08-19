@@ -70,7 +70,6 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
       />
 
       {/* Modal box */}
-      {/* <div className="fixed inset-0 flex items-center justify-center z-50 px-4"> */}
       <div className="fixed inset-0 overflow-y-auto z-50 px-4 py-6 sm:py-12">
 
         <div
@@ -157,13 +156,15 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
           </div>
 
           {/* Action Buttons */}
-          <div className={`grid gap-3 mb-4 ${currentGame.difficulty === 'custom' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
+          <div className="flex flex-wrap justify-center sm:justify-between gap-3 mb-4">
+            {/* Share button - always visible */}
             <Button onClick={onShare} variant="outline" className="flex items-center gap-2">
               <Share2 className="w-4 h-4" />
               Share
             </Button>
 
-            {currentGame.difficulty !== 'custom' ? (
+            {/* Play Again - only for non-custom */}
+            {currentGame.difficulty !== 'custom' && (
               <Button
                 onClick={() => {
                   restartGame();
@@ -174,19 +175,20 @@ export function GameResultModal({ isOpen, onClose, onPlayAgain, onShare }) {
                 <RotateCcw className="w-4 h-4" />
                 Play Again
               </Button>
-            ) : (
-              <Button
-                onClick={() => {
-                  navigate('/');
-                  setTimeout(() => resetGame(), 0);
-                }}
-                variant="ghost"
-                className="flex items-center gap-2"
-              >
-                <Home className="w-4 h-4" />
-                Back to Home
-              </Button>
             )}
+
+            {/* Back to Home - always visible */}
+            <Button
+              onClick={() => {
+                navigate('/');
+                setTimeout(() => resetGame(), 0);
+              }}
+              variant="ghost"
+              className="flex items-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              Back to Home
+            </Button>
           </div>
         </div>
       </div>

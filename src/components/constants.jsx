@@ -65,7 +65,7 @@ export const difficulties = [
   },
   {
   id: Difficulty.INSANE,
-  icon: Brain, // Or choose a new icon if you'd like
+  icon: Brain,
   title: 'Insane',
   description: 'Unlimited attempts. no color feedbacks or position hints',
   attempts: Infinity,

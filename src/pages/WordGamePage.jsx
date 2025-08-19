@@ -22,7 +22,7 @@ export default function WordGamePage() {
       currentGame?.attempts.length >= currentGame?.maxAttempts);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' }); // optional but safe
+    window.scrollTo({ top: 0, behavior: 'auto' });
     if (inputRef.current) {
       inputRef.current.focus({ preventScroll: true });
     }
@@ -31,9 +31,9 @@ export default function WordGamePage() {
   const handleGuess = () => {
     if (guess.length !== 5 || !/^[A-Z]{5}$/.test(guess)) return;
 
-    const normalizedGuess = guess.toLowerCase(); // 🔥 make it lowercase for logic
+    const normalizedGuess = guess.toLowerCase(); // lowercase
     const result = checkWordGuess(normalizedGuess, answer, difficulty, showMisplaced);
-    const newGuesses = [...guesses, { guess, result }]; // note: keep UI guess in uppercase form
+    const newGuesses = [...guesses, { guess, result }]; // keep UI guess in uppercase form
 
     setGuess('');
     setCurrentGame(prev => ({
@@ -51,8 +51,6 @@ export default function WordGamePage() {
   if (!currentGame || currentGame.mode !== 'word') {
     return null;
   }
-
-  // localStorage.setItem('gameStatus', JSON.stringify({ isOver: true, outcome: 'win' }));
 
   const { difficulty, answer } = currentGame;
 
@@ -95,7 +93,6 @@ export default function WordGamePage() {
           <button
             onClick={() => {
               restartGame();
-              // setIsGameOver(false);
               setGuess('');
             }}
             className="flex items-center gap-1 text-gray-400 hover:text-blue-800 font-semibold border rounded-md border-gray-200 dark:border-gray-700 px-2 py-1 text-sm sm:text-base"
@@ -107,7 +104,6 @@ export default function WordGamePage() {
       </div>
       <Card>
         <div className="mb-2 border rounded-md border-gray-200 dark:border-gray-700 p-4">
-          {/* <div className="border-b border-gray-200 dark:border-gray-700 p-4 bg-background sticky top-0 z-10"> */}
 
           {difficulty === 'insane' && (
             <div className="mt-2 text-sm flex items-center gap-2 justify-center">
@@ -134,7 +130,7 @@ export default function WordGamePage() {
               className="h-3 bg-blue-600"
               style={{
                 width: currentGame.maxAttempts === Infinity
-                  ? '100%' // or maybe 'auto' or hide bar completely
+                  ? '100%'
                   : `${(currentGame.attempts.length / currentGame.maxAttempts) * 100}%`
               }}
             ></div>
@@ -299,9 +295,8 @@ export default function WordGamePage() {
       {/* Modal */}
       <GameResultModal
         isOpen={isGameOver}
-        onClose={() => { /* do nothing or leave empty to prevent modal closing */ }}
+        onClose={() => { /* empty to prevent modal closing */ }}
         onPlayAgain={() => {
-          // setIsGameOver(false);
           setGuess('');
           setCurrentGame(prev => ({ ...prev, attempts: [] }));
         }}
@@ -341,14 +336,14 @@ export default function WordGamePage() {
             '',
             ...resultLines,
             '',
-            'Play: https://yourgame.com' // 🔁 Replace this with your real URL or `window.location.origin`
+            'Play: https://crack-the-code-nine.vercel.app' 
           ].join('\n');
 
           if (navigator.share) {
             navigator.share({
               title: 'Word Game Result',
               text: shareText,
-              url: 'https://yourgame.com',
+              url: 'https://crack-the-code-nine.vercel.app',
             }).catch((err) => {
               console.error('Share failed:', err);
             });

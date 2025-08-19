@@ -9,8 +9,6 @@ import { Moon, Sun, Trophy, Target } from 'lucide-react';
 import { gameModes, difficulties, GameMode, Difficulty } from '../components/constants';
 
 export default function HomePage() {
-    //   const [selectedMode, setSelectedMode] = useState('number');
-    //   const [selectedDifficulty, setSelectedDifficulty] = useState('easy');
     const [selectedMode, setSelectedMode] = useState(GameMode.NUMBER);
     const [selectedDifficulty, setSelectedDifficulty] = useState(Difficulty.EASY);
     const navigate = useNavigate();

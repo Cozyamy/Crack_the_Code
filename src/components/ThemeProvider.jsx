@@ -1,10 +1,11 @@
-// src/components/ThemeProvider.jsx
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('dark'); // Default to dark
+  const [theme, setTheme] = useState(() => {
+  return localStorage.getItem('theme') || 'dark';
+});
 
   useEffect(() => {
     const root = window.document.documentElement;
