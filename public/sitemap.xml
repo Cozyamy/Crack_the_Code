@@ -32,10 +32,4 @@
     <priority>0.6</priority>
     <changefreq>monthly</changefreq>
   </url>
-
-  <url>
-    <loc>https://crack-the-code-nine.vercel.app/404</loc>
-    <priority>0.1</priority>
-    <changefreq>never</changefreq>
-  </url>
 </urlset>
