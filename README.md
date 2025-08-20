@@ -78,7 +78,7 @@ npm start
 
 ### 🧩 Custom Game Sharing
 
-Custom game URLs are generated with encrypted parameters:
+Custom game URLs are generated with encrypted parameters to avoid cheating:
 
 ```txt
 /play?code=<encrypted_game_config>
